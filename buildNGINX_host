@@ -14,15 +14,17 @@
 #  Version: VERNUMB
 #
 ######################################################################
-USAGE="\n 
-This program will create new\n
-server block on given system and\n 
-restart nginx web server\n
-\n
-Sample $0 <SERVER_BLOCK>\n
-"
+function usage(){
+cat <<EOF
+usage: $0 <HOSTNAME>
+------------------------------
+
+Creates virtual host in NGINX and restart server.
+EOF
+}
+
 if [ -z "$1" ]; then
-echo -e $USAGE 
+usage
 exit
 fi
 
@@ -31,6 +33,7 @@ NGINX_HOME="/etc/nginx";
 SPECFILE="
 server
 {
+    listen 82;
     server_name $1.argoden.com;
     access_log /var/log/nginx/$1.access.log;
     error_log /var/log/nginx/$1.error.log;
@@ -40,7 +43,7 @@ server
     # use fastcgi for all php files
     location ~ \.php$
     {
-        fastcgi_pass unix:/var/run/php5-fpm.sock;
+        fastcgi_pass unix:/var/run/php7.0-fpm.sock;
         fastcgi_index index.php;
     #    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
         include fastcgi_params;
@@ -60,6 +63,8 @@ server
 ";
 
 
-echo -e "$SPECFILE" > $1
+echo -e "$SPECFILE" > $NGINX_HOME/sites-available/$1
+echo 
 sudo ln -s $NGINX_HOME/sites-available/$1 $NGINX_HOME/sites-enabled/$1
 sudo service nginx restart
+
